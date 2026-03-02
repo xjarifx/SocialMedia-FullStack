@@ -1,4 +1,4 @@
-import { NotificationType } from "../../generated/prisma/index";
+import { NotificationType } from "../../generated/prisma/index.js";
 import { prisma } from "../../lib/prisma";
 import { followUserSchema, unfollowParamSchema } from "./follow.validation";
 

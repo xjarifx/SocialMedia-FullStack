@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { Plan } from "../../generated/prisma/index";
+import { Plan } from "../../generated/prisma/index.js";
 import { prisma } from "../../lib/prisma";
 import { invalidateTags } from "../../lib/cache";
 
