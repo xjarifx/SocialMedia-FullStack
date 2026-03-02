@@ -13,6 +13,10 @@ const REFRESH_TOKEN_SECRET: string | undefined =
 const REFRESH_TOKEN_EXPIRES_IN: string | undefined =
   process.env.REFRESH_TOKEN_EXPIRES_IN;
 
+const jwtExpiresIn = JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"];
+const refreshTokenExpiresIn =
+  REFRESH_TOKEN_EXPIRES_IN as jwt.SignOptions["expiresIn"];
+
 if (!JWT_SECRET) {
   throw new Error("JWT_SECRET environment variable is not set");
 }
@@ -31,7 +35,7 @@ if (!REFRESH_TOKEN_EXPIRES_IN) {
 
 const generateToken = (userId: string): string => {
   return jwt.sign({ userId }, JWT_SECRET as jwt.Secret, {
-    expiresIn: JWT_EXPIRES_IN,
+    expiresIn: jwtExpiresIn,
   });
 };
 
@@ -40,7 +44,7 @@ const generateRefreshToken = (userId: string): string => {
     { userId, jti: randomBytes(16).toString("hex") },
     REFRESH_TOKEN_SECRET as jwt.Secret,
     {
-      expiresIn: REFRESH_TOKEN_EXPIRES_IN,
+      expiresIn: refreshTokenExpiresIn,
     },
   );
 };

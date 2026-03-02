@@ -2,11 +2,13 @@ import { NotificationType } from "../../generated/prisma/index";
 import { prisma } from "../../lib/prisma";
 import { followUserSchema, unfollowParamSchema } from "./follow.validation";
 
-const formatUserLabel = (user?: {
-  username?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
-}): string => {
+const formatUserLabel = (
+  user?: {
+    username?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+  } | null,
+): string => {
   if (!user) {
     return "Someone";
   }
