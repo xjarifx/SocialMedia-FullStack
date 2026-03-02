@@ -4,14 +4,16 @@ const appEnv = (
   import.meta.env.VITE_APP_ENV ||
   (isProductionBuild ? "production" : "development")
 ).toLowerCase();
-const PROD_API_URL = "https://social-network-api.onrender.com/api/v1";
+const PROD_API_URL = "/api/v1";
 const selectedApiUrl =
   isProductionBuild || appEnv === "production"
     ? PROD_API_URL
     : import.meta.env.VITE_API_URL_DEV || import.meta.env.VITE_API_URL;
 
 const API_BASE_URL = selectedApiUrl || "http://localhost:3000/api/v1";
-export const API_ROOT_URL = API_BASE_URL.replace(/\/api\/v1\/?$/, "");
+export const API_ROOT_URL = API_BASE_URL.startsWith("/")
+  ? window.location.origin
+  : API_BASE_URL.replace(/\/api\/v1\/?$/, "");
 
 // Storage keys
 const TOKEN_KEY = "social_access_token";
