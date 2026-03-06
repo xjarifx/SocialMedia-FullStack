@@ -12,9 +12,9 @@ const ensureImageKitConfig = () => {
 
 // Initialize ImageKit client
 const imagekit = new ImageKit({
-  publicKey: publicKey || "",
-  privateKey: privateKey || "",
-  urlEndpoint: urlEndpoint || "",
+  publicKey: publicKey!,
+  privateKey: privateKey!,
+  urlEndpoint: urlEndpoint!,
 });
 
 export interface UploadResponse {
@@ -56,15 +56,15 @@ export const uploadMedia = async (
     });
 
     return {
-      fileId: result.fileId,
-      name: result.name,
-      url: result.url,
-      thumbnailUrl: result.thumbnailUrl,
-      height: result.height,
-      width: result.width,
-      size: result.size,
-      filePath: result.filePath,
-      fileType: result.fileType,
+      fileId: result.fileId!,
+      name: result.name!,
+      url: result.url!,
+      thumbnailUrl: result.thumbnailUrl!,
+      height: result.height!,
+      width: result.width!,
+      size: result.size!,
+      filePath: result.filePath!,
+      fileType: result.fileType!,
     };
   } catch (error) {
     console.error("ImageKit upload error details:", error);
