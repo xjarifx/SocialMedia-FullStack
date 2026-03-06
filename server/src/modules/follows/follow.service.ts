@@ -22,7 +22,7 @@ export const followUser = async (
 ) => {
   const validation = followUserSchema.safeParse({ params });
   if (!validation.success) {
-    throw { status: 400, error: validation.error.flatten() };
+    throw { status: 400, error: validation.error.format() };
   }
 
   const { userId: followingId } = validation.data.params;
@@ -127,7 +127,7 @@ export const unfollowUser = async (
 ) => {
   const validation = unfollowParamSchema.safeParse({ params });
   if (!validation.success) {
-    throw { status: 400, error: validation.error.flatten() };
+    throw { status: 400, error: validation.error.format() };
   }
 
   const { followingId } = validation.data.params;

@@ -57,67 +57,26 @@ const getRefreshTokenExpiry = (): Date => {
 export const registerUser = async (input: RegisterBody) => {
   const { email, username, password, firstName, lastName } = input;
 
-  // Check if email already exists
-  let existingEmail;
-  try {
-    existingEmail = await prisma.user.findUnique({
-      where: { email },
-    });
-  } catch (dbError) {
-    console.error("Database error checking email:", dbError);
-    throw dbError;
-  }
+  const existingEmail = await prisma.user.findUnique({ where: { email } });
+  if (existingEmail) throw new Error("EMAIL_TAKEN");
 
-  if (existingEmail) {
-    throw new Error("EMAIL_TAKEN");
-  }
+  const existingUsername = await prisma.user.findUnique({ where: { username } });
+  if (existingUsername) throw new Error("USERNAME_TAKEN");
 
-  // Check if username already exists
-  let existingUsername;
-  try {
-    existingUsername = await prisma.user.findUnique({
-      where: { username },
-    });
-  } catch (dbError) {
-    console.error("Database error checking username:", dbError);
-    throw dbError;
-  }
-
-  if (existingUsername) {
-    throw new Error("USERNAME_TAKEN");
-  }
-
-  // Hash password
   const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
-  // Create user
-  let user;
-  try {
-    user = await prisma.user.create({
-      data: {
-        email,
-        username,
-        password: hashedPassword,
-        firstName,
-        lastName,
-      },
-    });
-  } catch (dbError) {
-    console.error("Database error creating user:", dbError);
-    throw dbError;
-  }
+  const user = await prisma.user.create({
+    data: { email, username, password: hashedPassword, firstName, lastName },
+  });
 
-  // Generate JWT token
   const token = generateToken(user.id);
   const refreshToken = generateRefreshToken(user.id);
 
-  // Store refresh token in database
-  const expiresAt = getRefreshTokenExpiry();
   await prisma.refreshToken.create({
     data: {
       userId: user.id,
       token: refreshToken,
-      expiresAt,
+      expiresAt: getRefreshTokenExpiry(),
     },
   });
 
@@ -137,30 +96,23 @@ export const registerUser = async (input: RegisterBody) => {
 };
 
 export const loginUser = async (input: LoginBody) => {
-  // Find user by email
-  const user = await prisma.user.findUnique({
-    where: { email: input.email },
-  });
-  if (!user) {
-    throw new Error("INVALID_CREDENTIALS");
-  }
-  // Verify password
+  const user = await prisma.user.findUnique({ where: { email: input.email } });
+  if (!user) throw new Error("INVALID_CREDENTIALS");
+
   const isPasswordValid = await bcrypt.compare(input.password, user.password);
-  if (!isPasswordValid) {
-    throw new Error("INVALID_CREDENTIALS");
-  }
-  // Generate JWT token
+  if (!isPasswordValid) throw new Error("INVALID_CREDENTIALS");
+
   const token = generateToken(user.id);
   const refreshToken = generateRefreshToken(user.id);
-  // Store refresh token in database
-  const expiresAt = getRefreshTokenExpiry();
+
   await prisma.refreshToken.create({
     data: {
       userId: user.id,
       token: refreshToken,
-      expiresAt,
+      expiresAt: getRefreshTokenExpiry(),
     },
   });
+
   return {
     accessToken: token,
     refreshToken,
@@ -177,21 +129,13 @@ export const loginUser = async (input: LoginBody) => {
 };
 
 export const logoutUser = async (refreshToken: string) => {
-  // Find the refresh token in the database
   const tokenRecord = await prisma.refreshToken.findUnique({
     where: { token: refreshToken },
   });
 
-  if (!tokenRecord) {
-    throw new Error("INVALID_REFRESH_TOKEN");
-  }
+  if (!tokenRecord) throw new Error("INVALID_REFRESH_TOKEN");
+  if (tokenRecord.revokedAt) throw new Error("TOKEN_ALREADY_REVOKED");
 
-  // Check if already revoked
-  if (tokenRecord.revokedAt) {
-    throw new Error("TOKEN_ALREADY_REVOKED");
-  }
-
-  // Revoke the refresh token
   await prisma.refreshToken.update({
     where: { token: refreshToken },
     data: { revokedAt: new Date() },
@@ -201,52 +145,34 @@ export const logoutUser = async (refreshToken: string) => {
 };
 
 export const refreshAccessToken = async (refreshToken: string) => {
-  // Find the refresh token in the database
   const tokenRecord = await prisma.refreshToken.findUnique({
     where: { token: refreshToken },
     include: { user: true },
   });
 
-  if (!tokenRecord) {
-    throw new Error("INVALID_REFRESH_TOKEN");
-  }
+  if (!tokenRecord) throw new Error("INVALID_REFRESH_TOKEN");
+  if (tokenRecord.revokedAt) throw new Error("TOKEN_REVOKED");
+  if (new Date() > tokenRecord.expiresAt) throw new Error("TOKEN_EXPIRED");
 
-  // Check if token is revoked
-  if (tokenRecord.revokedAt) {
-    throw new Error("TOKEN_REVOKED");
-  }
-
-  // Check if token is expired
-  if (new Date() > tokenRecord.expiresAt) {
-    throw new Error("TOKEN_EXPIRED");
-  }
-
-  // Verify the refresh token JWT signature
   try {
     jwt.verify(refreshToken, REFRESH_TOKEN_SECRET);
   } catch (error) {
     throw new Error("INVALID_REFRESH_TOKEN");
   }
 
-  // Generate new access token
   const newAccessToken = generateToken(tokenRecord.userId);
-
-  // Generate new refresh token and revoke old one
   const newRefreshToken = generateRefreshToken(tokenRecord.userId);
 
-  // Revoke old refresh token
   await prisma.refreshToken.update({
     where: { token: refreshToken },
     data: { revokedAt: new Date() },
   });
 
-  // Store new refresh token
-  const expiresAt = getRefreshTokenExpiry();
   await prisma.refreshToken.create({
     data: {
       userId: tokenRecord.userId,
       token: newRefreshToken,
-      expiresAt,
+      expiresAt: getRefreshTokenExpiry(),
     },
   });
 

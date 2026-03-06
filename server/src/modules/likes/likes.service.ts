@@ -1,6 +1,6 @@
 import { NotificationType } from "../../generated/prisma/index.js";
 import { prisma } from "../../lib/prisma";
-import { invalidateTags } from "../../lib/cache";
+import { invalidatePattern } from "../../lib/cache";
 import { likePostParamsSchema } from "./likes.validation";
 
 const ensureString = (val: unknown): string =>
@@ -24,7 +24,7 @@ export const likePost = async (
 ) => {
   const paramValidation = likePostParamsSchema.safeParse({ params });
   if (!paramValidation.success) {
-    throw { status: 400, error: paramValidation.error.flatten() };
+    throw { status: 400, error: paramValidation.error.format() };
   }
 
   const { postId } = paramValidation.data.params;
@@ -105,13 +105,11 @@ export const likePost = async (
     return like;
   });
 
-  await invalidateTags([
-    `post:${postId}`,
-    "feed",
-    "for-you",
-    `timeline:user:${post.authorId}`,
-    `notifications:user:${post.authorId}`,
-  ]);
+  await invalidatePattern(`post:${postId}*`);
+  await invalidatePattern("feed:*");
+  await invalidatePattern("for-you:*");
+  await invalidatePattern(`timeline:user:${post.authorId}*`);
+  await invalidatePattern(`notifications:user:${post.authorId}*`);
 
   return {
     id: result.id,
@@ -129,7 +127,7 @@ export const unlikePost = async (
 ) => {
   const paramValidation = likePostParamsSchema.safeParse({ params });
   if (!paramValidation.success) {
-    throw { status: 400, error: paramValidation.error.flatten() };
+    throw { status: 400, error: paramValidation.error.format() };
   }
 
   const { postId } = paramValidation.data.params;
@@ -180,12 +178,10 @@ export const unlikePost = async (
     });
   });
 
-  await invalidateTags([
-    `post:${postId}`,
-    "feed",
-    "for-you",
-    `timeline:user:${post.authorId}`,
-  ]);
+  await invalidatePattern(`post:${postId}*`);
+  await invalidatePattern("feed:*");
+  await invalidatePattern("for-you:*");
+  await invalidatePattern(`timeline:user:${post.authorId}*`);
 
   return {
     message: "Post unliked successfully",
@@ -198,7 +194,7 @@ export const getPostLikes = async (
 ) => {
   const paramValidation = likePostParamsSchema.safeParse({ params });
   if (!paramValidation.success) {
-    throw { status: 400, error: paramValidation.error.flatten() };
+    throw { status: 400, error: paramValidation.error.format() };
   }
 
   const limit = query.limit ? parseInt(query.limit as string, 10) : 20;

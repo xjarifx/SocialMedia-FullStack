@@ -3,7 +3,7 @@ import {
   buildCacheKey,
   cacheGet,
   cacheSet,
-  invalidateTags,
+  invalidatePattern,
 } from "../../lib/cache";
 import {
   updateProfileSchema,
@@ -39,7 +39,7 @@ export const getCurrentUserProfile = async (userId: string) => {
 export const getUserProfile = async (params: Record<string, unknown>) => {
   const validation = userIdParamSchema.safeParse({ params });
   if (!validation.success) {
-    throw { status: 400, error: validation.error.flatten() };
+    throw { status: 400, error: validation.error.format() };
   }
 
   const userId = validation.data.params.userId;
@@ -74,10 +74,7 @@ export const getUserProfile = async (params: Record<string, unknown>) => {
     throw { status: 404, error: "User not found" };
   }
 
-  await cacheSet(cacheKey, user, {
-    ttlSeconds: PROFILE_TTL_SECONDS,
-    tags: [`user:${userId}`],
-  });
+  await cacheSet(cacheKey, user, PROFILE_TTL_SECONDS);
 
   return user;
 };
@@ -89,7 +86,7 @@ export const getUserTimeline = async (
 ) => {
   const paramValidation = userIdParamSchema.safeParse({ params });
   if (!paramValidation.success) {
-    throw { status: 400, error: paramValidation.error.flatten() };
+    throw { status: 400, error: paramValidation.error.format() };
   }
 
   const userId = paramValidation.data.params.userId;
@@ -193,10 +190,7 @@ export const getUserTimeline = async (
     offset,
   };
 
-  await cacheSet(cacheKey, response, {
-    ttlSeconds: TIMELINE_TTL_SECONDS,
-    tags: [`timeline:user:${userId}`],
-  });
+  await cacheSet(cacheKey, response, TIMELINE_TTL_SECONDS);
 
   return response;
 };
@@ -208,7 +202,7 @@ export const updateUserProfile = async (
 ) => {
   const paramValidation = userIdParamSchema.safeParse({ params });
   if (!paramValidation.success) {
-    throw { status: 400, error: paramValidation.error.flatten() };
+    throw { status: 400, error: paramValidation.error.format() };
   }
 
   const profileUserId = paramValidation.data.params.userId;
@@ -221,7 +215,7 @@ export const updateUserProfile = async (
   // Validate input
   const bodyValidation = updateProfileSchema.safeParse({ body });
   if (!bodyValidation.success) {
-    throw { status: 400, error: bodyValidation.error.flatten() };
+    throw { status: 400, error: bodyValidation.error.format() };
   }
 
   // Check if user exists
@@ -252,7 +246,8 @@ export const updateUserProfile = async (
     },
   });
 
-  await invalidateTags([`user:${userId}`, `timeline:user:${userId}`]);
+  await invalidatePattern(`user:${userId}*`);
+  await invalidatePattern(`timeline:user:${userId}*`);
 
   return updatedUser;
 };
@@ -260,7 +255,7 @@ export const updateUserProfile = async (
 export const searchUsers = async (query: Record<string, unknown>) => {
   const validation = searchUsersSchema.safeParse({ query });
   if (!validation.success) {
-    throw { status: 400, error: validation.error.flatten() };
+    throw { status: 400, error: validation.error.format() };
   }
 
   const { q, limit: limitStr, offset: offsetStr } = validation.data.query;

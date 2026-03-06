@@ -32,15 +32,18 @@ async function main() {
     .map((origin) => origin.trim())
     .filter(Boolean);
 
+  // Add localhost:5173 as fallback for development
+  if (!configuredFrontendOrigins.includes("http://localhost:5173")) {
+    configuredFrontendOrigins.push("http://localhost:5173");
+  }
+
+  console.log("🔧 CORS Configuration:");
+  console.log("  - FRONTEND_URL:", process.env.FRONTEND_URL);
+  console.log("  - Allowed origins:", configuredFrontendOrigins);
+
   const isAllowedOrigin = (origin: string): boolean => {
-    if (configuredFrontendOrigins.includes(origin)) {
-      return true;
-    }
-
-    if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)) {
-      return true;
-    }
-
+    if (configuredFrontendOrigins.includes(origin)) return true;
+    if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)) return true;
     return false;
   };
 
@@ -49,78 +52,20 @@ async function main() {
       origin: string | undefined,
       callback: (err: Error | null, allow?: boolean) => void,
     ) => {
-      if (!origin) {
+      console.log(`📡 CORS request from origin: ${origin || "undefined"}`);
+      if (!origin || isAllowedOrigin(origin)) {
+        console.log(`✅ CORS allowed for: ${origin || "no-origin"}`);
         callback(null, true);
         return;
       }
-
-      if (isAllowedOrigin(origin)) {
-        callback(null, true);
-        return;
-      }
-
-      console.warn(`Blocked by CORS: ${origin}`);
+      console.warn(`❌ Blocked by CORS: ${origin}`);
       callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-Requested-With",
-      "Accept",
-      "Origin",
-    ],
-    optionsSuccessStatus: 204,
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
   };
 
-  const applyCorsHeaders = (
-    res: import("express").Response,
-    origin: string | undefined,
-  ): void => {
-    if (origin && isAllowedOrigin(origin)) {
-      res.setHeader("Access-Control-Allow-Origin", origin);
-      res.setHeader("Vary", "Origin");
-    }
-
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader(
-      "Access-Control-Allow-Methods",
-      "GET,POST,PUT,PATCH,DELETE,OPTIONS",
-    );
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Content-Type,Authorization,X-Requested-With,Accept,Origin",
-    );
-  };
-
-  app.use(
-    (
-      req: import("express").Request,
-      res: import("express").Response,
-      next: import("express").NextFunction,
-    ) => {
-      if (req.method !== "OPTIONS") {
-        next();
-        return;
-      }
-
-      const origin = req.headers.origin;
-
-      if (origin && !isAllowedOrigin(origin)) {
-        console.warn(`Blocked preflight by CORS: ${origin}`);
-        res
-          .status(403)
-          .json({ success: false, data: {}, error: "Not allowed by CORS" });
-        return;
-      }
-
-      applyCorsHeaders(res, origin);
-      res.sendStatus(204);
-    },
-  );
-
-  // CORS Configuration
   app.use(cors(corsOptions));
 
   app.use(

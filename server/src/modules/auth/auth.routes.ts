@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { register, login, logout, refresh } from "./auth.controller";
-import { authLimiter } from "../../middleware/rateLimit.middleware";
+import { generalLimiter } from "../../middleware/rateLimit.middleware";
 
 const router = Router();
 
@@ -45,7 +45,7 @@ const router = Router();
  *       429:
  *         description: Too many requests
  */
-router.post("/register", authLimiter, register);
+router.post("/register", generalLimiter, register);
 
 /**
  * @openapi
@@ -86,7 +86,7 @@ router.post("/register", authLimiter, register);
  *       429:
  *         description: Too many requests
  */
-router.post("/login", authLimiter, login);
+router.post("/login", generalLimiter, login);
 
 /**
  * @openapi

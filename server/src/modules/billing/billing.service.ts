@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import { Plan } from "../../generated/prisma/index.js";
 import { prisma } from "../../lib/prisma";
-import { invalidateTags } from "../../lib/cache";
+import { invalidatePattern } from "../../lib/cache";
 
 // ---------------------------------------------------------------------------
 // Stripe init
@@ -53,7 +53,8 @@ const requireUserId = (val: unknown): string => {
 };
 
 const invalidateUserPlanCaches = async (userId: string) => {
-  await invalidateTags([`user:${userId}`, `timeline:user:${userId}`]);
+  await invalidatePattern(`user:${userId}*`);
+  await invalidatePattern(`timeline:user:${userId}*`);
 };
 
 // ---------------------------------------------------------------------------

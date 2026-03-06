@@ -3,7 +3,7 @@ import {
   buildCacheKey,
   cacheGet,
   cacheSet,
-  invalidateTags,
+  cacheDel,
 } from "../../lib/cache";
 import {
   getNotificationsQuerySchema,
@@ -27,7 +27,7 @@ export const getNotifications = async (
 
   const validation = getNotificationsQuerySchema.safeParse({ query });
   if (!validation.success) {
-    throw { status: 400, error: validation.error.flatten() };
+    throw { status: 400, error: validation.error.format() };
   }
 
   const { limit, offset, read } = validation.data.query;
@@ -108,10 +108,7 @@ export const getNotifications = async (
     offset,
   };
 
-  await cacheSet(cacheKey, response, {
-    ttlSeconds: NOTIFICATIONS_TTL_SECONDS,
-    tags: [`notifications:user:${ownerId}`],
-  });
+  await cacheSet(cacheKey, response, NOTIFICATIONS_TTL_SECONDS);
 
   return response;
 };
@@ -127,7 +124,7 @@ export const getNotificationById = async (
 
   const validation = notificationIdParamSchema.safeParse({ params });
   if (!validation.success) {
-    throw { status: 400, error: validation.error.flatten() };
+    throw { status: 400, error: validation.error.format() };
   }
 
   const { notificationId } = validation.data.params;
@@ -183,10 +180,7 @@ export const getNotificationById = async (
     relatedPost: notification.relatedPost,
   };
 
-  await cacheSet(cacheKey, response, {
-    ttlSeconds: NOTIFICATIONS_TTL_SECONDS,
-    tags: [`notification:${notificationId}`, `notifications:user:${ownerId}`],
-  });
+  await cacheSet(cacheKey, response, NOTIFICATIONS_TTL_SECONDS);
 
   return response;
 };
@@ -203,12 +197,12 @@ export const updateNotificationRead = async (
 
   const paramValidation = notificationIdParamSchema.safeParse({ params });
   if (!paramValidation.success) {
-    throw { status: 400, error: paramValidation.error.flatten() };
+    throw { status: 400, error: paramValidation.error.format() };
   }
 
   const bodyValidation = updateNotificationBodySchema.safeParse({ body });
   if (!bodyValidation.success) {
-    throw { status: 400, error: bodyValidation.error.flatten() };
+    throw { status: 400, error: bodyValidation.error.format() };
   }
 
   const { notificationId } = paramValidation.data.params;
@@ -223,7 +217,7 @@ export const updateNotificationRead = async (
     throw { status: 404, error: "Notification not found" };
   }
 
-  await invalidateTags([
+  await cacheDel([
     `notification:${notificationId}`,
     `notifications:user:${ownerId}`,
   ]);
@@ -242,7 +236,7 @@ export const deleteNotification = async (
 
   const validation = notificationIdParamSchema.safeParse({ params });
   if (!validation.success) {
-    throw { status: 400, error: validation.error.flatten() };
+    throw { status: 400, error: validation.error.format() };
   }
 
   const { notificationId } = validation.data.params;
@@ -254,7 +248,7 @@ export const deleteNotification = async (
     throw { status: 404, error: "Notification not found" };
   }
 
-  await invalidateTags([
+  await cacheDel([
     `notification:${notificationId}`,
     `notifications:user:${ownerId}`,
   ]);

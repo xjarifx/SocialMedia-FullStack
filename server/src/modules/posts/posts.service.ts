@@ -4,7 +4,7 @@ import {
   buildCacheKey,
   cacheGet,
   cacheSet,
-  invalidateTags,
+  invalidatePattern,
 } from "../../lib/cache";
 import {
   createPostSchema,
@@ -26,22 +26,29 @@ const parseNonNegativeInt = (val: unknown, fallback: number): number => {
 const getPlanPostLimit = (plan: string | null | undefined): number =>
   plan === "PRO" ? 100 : 20;
 
-const getValidationErrorMessage = (error: {
-  fieldErrors?: Record<string, string[]>;
-  formErrors?: string[];
-}): string => {
+const getValidationErrorMessage = (error: any): string => {
+  // Handle both .flatten() and .format() outputs
   if (error.fieldErrors) {
     const firstField = Object.entries(error.fieldErrors)[0];
     if (firstField && Array.isArray(firstField[1]) && firstField[1][0]) {
       return firstField[1][0];
     }
   }
-  if (
-    error.formErrors &&
-    Array.isArray(error.formErrors) &&
-    error.formErrors[0]
-  ) {
+  if (error.formErrors && Array.isArray(error.formErrors) && error.formErrors[0]) {
     return error.formErrors[0];
+  }
+  // Handle .format() nested structure
+  if (error._errors && Array.isArray(error._errors) && error._errors[0]) {
+    return error._errors[0];
+  }
+  // Check nested fields in .format() output
+  for (const key in error) {
+    if (key !== '_errors' && error[key] && typeof error[key] === 'object') {
+      const nestedError = getValidationErrorMessage(error[key]);
+      if (nestedError !== "Validation failed") {
+        return nestedError;
+      }
+    }
   }
   return "Validation failed";
 };
@@ -101,10 +108,7 @@ export const getFeed = async (
   });
 
   const response = posts.map(mapPostFeed);
-  await cacheSet(cacheKey, response, {
-    ttlSeconds: FEED_TTL_SECONDS,
-    tags: ["feed", `feed:user:${userId}`],
-  });
+  await cacheSet(cacheKey, response, FEED_TTL_SECONDS);
   return response;
 };
 
@@ -183,10 +187,7 @@ export const getForYouFeed = async (
   });
 
   const response = posts.map(mapPostFeed);
-  await cacheSet(cacheKey, response, {
-    ttlSeconds: FEED_TTL_SECONDS,
-    tags: ["for-you", `for-you:user:${userId}`],
-  });
+  await cacheSet(cacheKey, response, FEED_TTL_SECONDS);
   return response;
 };
 
@@ -252,7 +253,7 @@ export const createPost = async (
   if (!validationResult.success) {
     throw {
       status: 400,
-      error: getValidationErrorMessage(validationResult.error.flatten()),
+      error: getValidationErrorMessage(validationResult.error.format()),
     };
   }
 
@@ -315,7 +316,9 @@ export const createPost = async (
     updatedAt: post.updatedAt,
   };
 
-  await invalidateTags(["feed", "for-you", `timeline:user:${authorId}`]);
+  await invalidatePattern("feed:*");
+  await invalidatePattern("for-you:*");
+  await invalidatePattern(`timeline:user:${authorId}*`);
 
   return response;
 };
@@ -328,7 +331,7 @@ export const getPostById = async (
   if (!paramValidation.success) {
     throw {
       status: 400,
-      error: getValidationErrorMessage(paramValidation.error.flatten()),
+      error: getValidationErrorMessage(paramValidation.error.format()),
     };
   }
 
@@ -399,10 +402,7 @@ export const getPostById = async (
   }
 
   const response = mapPostDetail(post);
-  await cacheSet(cacheKey, response, {
-    ttlSeconds: POST_TTL_SECONDS,
-    tags: [`post:${postId}`],
-  });
+  await cacheSet(cacheKey, response, POST_TTL_SECONDS);
 
   return response;
 };
@@ -470,7 +470,7 @@ export const updatePost = async (
   if (!paramValidation.success) {
     throw {
       status: 400,
-      error: getValidationErrorMessage(paramValidation.error.flatten()),
+      error: getValidationErrorMessage(paramValidation.error.format()),
     };
   }
 
@@ -478,7 +478,7 @@ export const updatePost = async (
   if (!validationResult.success) {
     throw {
       status: 400,
-      error: getValidationErrorMessage(validationResult.error.flatten()),
+      error: getValidationErrorMessage(validationResult.error.format()),
     };
   }
 
@@ -535,12 +535,10 @@ export const updatePost = async (
     updatedAt: updatedPost.updatedAt,
   };
 
-  await invalidateTags([
-    `post:${postId}`,
-    "feed",
-    "for-you",
-    `timeline:user:${authorId}`,
-  ]);
+  await invalidatePattern(`post:${postId}*`);
+  await invalidatePattern("feed:*");
+  await invalidatePattern("for-you:*");
+  await invalidatePattern(`timeline:user:${authorId}*`);
 
   return response;
 };
@@ -553,7 +551,7 @@ export const deletePost = async (
   if (!paramValidation.success) {
     throw {
       status: 400,
-      error: getValidationErrorMessage(paramValidation.error.flatten()),
+      error: getValidationErrorMessage(paramValidation.error.format()),
     };
   }
 
@@ -579,13 +577,11 @@ export const deletePost = async (
     where: { id: postId },
   });
 
-  await invalidateTags([
-    `post:${postId}`,
-    `comments:post:${postId}`,
-    "feed",
-    "for-you",
-    `timeline:user:${authorId}`,
-  ]);
+  await invalidatePattern(`post:${postId}*`);
+  await invalidatePattern(`comments:post:${postId}*`);
+  await invalidatePattern("feed:*");
+  await invalidatePattern("for-you:*");
+  await invalidatePattern(`timeline:user:${authorId}*`);
 
   return { message: "Post deleted successfully" };
 };

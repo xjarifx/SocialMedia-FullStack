@@ -6,7 +6,7 @@ import {
   buildCacheKey,
   cacheGet,
   cacheSet,
-  invalidateTags,
+  invalidatePattern,
 } from "../../lib/cache";
 
 import {
@@ -117,14 +117,12 @@ export const createComment = async (userId: string, body: object) => {
   };
 
   // Invalidate relevant cache entries
-  await invalidateTags([
-    `comments:post:${postId}`,
-    `post:${postId}`,
-    "feed",
-    "for-you",
-    `timeline:user:${post.authorId}`,
-    `notifications:user:${post.authorId}`,
-  ]);
+  await invalidatePattern(`comments:post:${postId}*`);
+  await invalidatePattern(`post:${postId}*`);
+  await invalidatePattern("feed:*");
+  await invalidatePattern("for-you:*");
+  await invalidatePattern(`timeline:user:${post.authorId}*`);
+  await invalidatePattern(`notifications:user:${post.authorId}*`);
 
   return response;
 };
@@ -137,7 +135,7 @@ export const getComments = async (
 ) => {
   const validationResult = getCommentsSchema.safeParse({ params, query });
   if (!validationResult.success) {
-    throw { status: 400, error: validationResult.error.flatten() };
+    throw { status: 400, error: validationResult.error.format() };
   }
 
   const {
@@ -305,10 +303,7 @@ export const getComments = async (
     offset,
   };
 
-  await cacheSet(cacheKey, response, {
-    ttlSeconds: COMMENTS_TTL_SECONDS,
-    tags: [`comments:post:${postId}`],
-  });
+  await cacheSet(cacheKey, response, COMMENTS_TTL_SECONDS);
 
   return response;
 };
@@ -321,7 +316,7 @@ export const updateComment = async (
   const validationResult = updateCommentSchema.safeParse({ params, body });
 
   if (!validationResult.success) {
-    throw { status: 400, error: validationResult.error.flatten() };
+    throw { status: 400, error: validationResult.error.format() };
   }
 
   const {
@@ -378,12 +373,10 @@ export const updateComment = async (
     createdAt: updatedComment.createdAt,
   };
 
-  await invalidateTags([
-    `comments:post:${updatedComment.postId}`,
-    `post:${updatedComment.postId}`,
-    "feed",
-    "for-you",
-  ]);
+  await invalidatePattern(`comments:post:${updatedComment.postId}*`);
+  await invalidatePattern(`post:${updatedComment.postId}*`);
+  await invalidatePattern("feed:*");
+  await invalidatePattern("for-you:*");
 
   return response;
 };
@@ -394,7 +387,7 @@ export const deleteComment = async (
 ) => {
   const validationResult = deleteCommentSchema.safeParse({ params });
   if (!validationResult.success) {
-    throw { status: 400, error: validationResult.error.flatten() };
+    throw { status: 400, error: validationResult.error.format() };
   }
 
   const {
@@ -430,12 +423,10 @@ export const deleteComment = async (
       },
     });
   });
-  await invalidateTags([
-    `comments:post:${comment.postId}`,
-    `post:${comment.postId}`,
-    "feed",
-    "for-you",
-  ]);
+  await invalidatePattern(`comments:post:${comment.postId}*`);
+  await invalidatePattern(`post:${comment.postId}*`);
+  await invalidatePattern("feed:*");
+  await invalidatePattern("for-you:*");
   return {
     message: "Comment deleted successfully",
     deletedCount: subtreeCount,
@@ -448,7 +439,7 @@ export const likeComment = async (
 ) => {
   const paramValidation = commentLikeParamsSchema.safeParse({ params });
   if (!paramValidation.success) {
-    throw { status: 400, error: paramValidation.error.flatten() };
+    throw { status: 400, error: paramValidation.error.format() };
   }
 
   const { postId, commentId } = paramValidation.data.params;
@@ -495,7 +486,8 @@ export const likeComment = async (
     return like;
   });
 
-  await invalidateTags([`comments:post:${postId}`, `post:${postId}`]);
+  await invalidatePattern(`comments:post:${postId}*`);
+  await invalidatePattern(`post:${postId}*`);
 
   return {
     id: result.id,
@@ -512,7 +504,7 @@ export const unlikeComment = async (
 ) => {
   const paramValidation = commentLikeParamsSchema.safeParse({ params });
   if (!paramValidation.success) {
-    throw { status: 400, error: paramValidation.error.flatten() };
+    throw { status: 400, error: paramValidation.error.format() };
   }
 
   const { postId, commentId } = paramValidation.data.params;
@@ -559,7 +551,8 @@ export const unlikeComment = async (
     });
   });
 
-  await invalidateTags([`comments:post:${postId}`, `post:${postId}`]);
+  await invalidatePattern(`comments:post:${postId}*`);
+  await invalidatePattern(`post:${postId}*`);
 
   return { message: "Comment unliked successfully" };
 };
@@ -570,12 +563,12 @@ export const getCommentLikes = async (
 ) => {
   const paramValidation = commentLikeParamsSchema.safeParse({ params });
   if (!paramValidation.success) {
-    throw { status: 400, error: paramValidation.error.flatten() };
+    throw { status: 400, error: paramValidation.error.format() };
   }
 
   const queryValidation = getCommentLikesQuerySchema.safeParse({ query });
   if (!queryValidation.success) {
-    throw { status: 400, error: queryValidation.error.flatten() };
+    throw { status: 400, error: queryValidation.error.format() };
   }
 
   const { postId, commentId } = paramValidation.data.params;

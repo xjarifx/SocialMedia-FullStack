@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authenticate } from "../../middleware/authenticate.middleware";
-import { createCommentLimiter } from "../../middleware/rateLimit.middleware";
+import { generalLimiter } from "../../middleware/rateLimit.middleware";
 import {
   createCommentHandler,
   getCommentsHandler,
@@ -59,7 +59,7 @@ const router = Router({ mergeParams: true });
  *       429:
  *         description: Too many requests
  */
-router.post("/", createCommentLimiter, authenticate, createCommentHandler);
+router.post("/", generalLimiter, authenticate, createCommentHandler);
 
 /**
  * @openapi

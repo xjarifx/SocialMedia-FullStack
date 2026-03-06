@@ -1,7 +1,24 @@
 import type { Post } from "../services/api";
 import { API_ROOT_URL } from "../services/api";
 import type { PostProps } from "../components";
-import { formatPostTime } from "./formatPostTime";
+
+/**
+ * Formats an ISO date string into a human-readable relative time.
+ */
+function formatPostTime(isoDate: string): string {
+  const date = new Date(isoDate);
+  const diffMs = Date.now() - date.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+  if (diffHours < 24) {
+    return `${Math.max(diffHours, 1)}h`;
+  }
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
 
 /**
  * Transforms an API Post object into PostProps for the PostCard component.

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authenticate } from "../../middleware/authenticate.middleware";
-import { createLikeLimiter } from "../../middleware/rateLimit.middleware";
+import { generalLimiter } from "../../middleware/rateLimit.middleware";
 import {
   likePostHandler,
   unlikePostHandler,
@@ -45,7 +45,7 @@ const router = Router({ mergeParams: true });
  *       429:
  *         description: Too many requests
  */
-router.post("/", createLikeLimiter, authenticate, likePostHandler);
+router.post("/", generalLimiter, authenticate, likePostHandler);
 
 /**
  * @openapi
@@ -81,7 +81,7 @@ router.post("/", createLikeLimiter, authenticate, likePostHandler);
  *       429:
  *         description: Too many requests
  */
-router.delete("/", createLikeLimiter, authenticate, unlikePostHandler);
+router.delete("/", generalLimiter, authenticate, unlikePostHandler);
 
 /**
  * @openapi

@@ -62,10 +62,6 @@ export default {
           from: { opacity: "0" },
           to: { opacity: "1" },
         },
-        "slide-up": {
-          from: { opacity: "0", transform: "translateY(12px)" },
-          to: { opacity: "1", transform: "translateY(0)" },
-        },
         "slide-down": {
           from: { opacity: "0", transform: "translateY(-12px)" },
           to: { opacity: "1", transform: "translateY(0)" },
@@ -77,7 +73,6 @@ export default {
       },
       animation: {
         "fade-in": "fade-in 220ms ease-out",
-        "slide-up": "slide-up 240ms ease-out",
         "slide-down": "slide-down 240ms ease-out",
         "scale-in": "scale-in 200ms ease-out",
       },
