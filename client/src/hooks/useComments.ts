@@ -150,6 +150,23 @@ export function useComments(): UseCommentsReturn {
       setOpenCommentsPostId(nextOpen);
 
       if (nextOpen && !commentsByPost[postId]) {
+        // Load comment draft from localStorage
+        try {
+          const key = `comment-draft-${postId}`;
+          const stored = localStorage.getItem(key);
+          if (stored) {
+            const data = JSON.parse(stored);
+            const isExpired = Date.now() - data.timestamp > 7 * 24 * 60 * 60 * 1000; // 7 days
+            if (!isExpired && data.content) {
+              setCommentDrafts((prev) => ({ ...prev, [postId]: data.content }));
+            } else if (isExpired) {
+              localStorage.removeItem(key);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load comment draft:', error);
+        }
+
         try {
           setCommentsLoading((prev) => ({ ...prev, [postId]: true }));
           const response = await commentsAPI.getPostComments(postId, {
@@ -210,6 +227,12 @@ export function useComments(): UseCommentsReturn {
           };
         });
         setCommentDrafts((prev) => ({ ...prev, [postId]: "" }));
+        // Clear from localStorage
+        try {
+          localStorage.removeItem(`comment-draft-${postId}`);
+        } catch (error) {
+          console.error('Failed to clear comment draft:', error);
+        }
         replyCountCb?.(postId, 1);
       } catch (err) {
         console.error("Failed to create comment:", err);
@@ -252,6 +275,12 @@ export function useComments(): UseCommentsReturn {
           };
         });
         setReplyDrafts((prev) => ({ ...prev, [parentId]: "" }));
+        // Clear from localStorage
+        try {
+          localStorage.removeItem(`reply-draft-${parentId}`);
+        } catch (error) {
+          console.error('Failed to clear reply draft:', error);
+        }
         updateCommentInCollections(parentId, (comment) => ({
           ...comment,
           repliesCount: comment.repliesCount + 1,
@@ -425,6 +454,23 @@ export function useComments(): UseCommentsReturn {
 
       if (repliesByComment[commentId]) return;
 
+      // Load reply draft from localStorage
+      try {
+        const key = `reply-draft-${commentId}`;
+        const stored = localStorage.getItem(key);
+        if (stored) {
+          const data = JSON.parse(stored);
+          const isExpired = Date.now() - data.timestamp > 7 * 24 * 60 * 60 * 1000; // 7 days
+          if (!isExpired && data.content) {
+            setReplyDrafts((prev) => ({ ...prev, [commentId]: data.content }));
+          } else if (isExpired) {
+            localStorage.removeItem(key);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load reply draft:', error);
+      }
+
       try {
         setRepliesLoading((prev) => ({ ...prev, [commentId]: true }));
         const response = await commentsAPI.getPostComments(postId, {
@@ -494,6 +540,17 @@ export function useComments(): UseCommentsReturn {
 
   const setReplyDraft = useCallback((commentId: string, value: string) => {
     setReplyDrafts((prev) => ({ ...prev, [commentId]: value }));
+    // Persist to localStorage
+    try {
+      const key = `reply-draft-${commentId}`;
+      if (value.trim()) {
+        localStorage.setItem(key, JSON.stringify({ content: value, timestamp: Date.now() }));
+      } else {
+        localStorage.removeItem(key);
+      }
+    } catch (error) {
+      console.error('Failed to save reply draft:', error);
+    }
   }, []);
 
   const handleToggleCommentLike = useCallback(
@@ -534,6 +591,17 @@ export function useComments(): UseCommentsReturn {
 
   const setCommentDraft = useCallback((postId: string, value: string) => {
     setCommentDrafts((prev) => ({ ...prev, [postId]: value }));
+    // Persist to localStorage
+    try {
+      const key = `comment-draft-${postId}`;
+      if (value.trim()) {
+        localStorage.setItem(key, JSON.stringify({ content: value, timestamp: Date.now() }));
+      } else {
+        localStorage.removeItem(key);
+      }
+    } catch (error) {
+      console.error('Failed to save comment draft:', error);
+    }
   }, []);
 
   const setCommentEditDraft = useCallback(

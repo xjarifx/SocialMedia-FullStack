@@ -3,6 +3,7 @@ import { Image } from "lucide-react";
 import { toast } from "sonner";
 import { postsAPI } from "../services/api";
 import { useAuth } from "../context/auth-context";
+import { useDraft } from "../hooks/useDraft";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
@@ -19,7 +20,7 @@ export function PostComposerModal({
   mediaPickerRequestId,
 }: PostComposerModalProps) {
   const { user } = useAuth();
-  const [content, setContent] = useState("");
+  const { draft: content, setDraft: setContent, clearDraft } = useDraft('post-modal-draft');
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreviewUrl, setMediaPreviewUrl] = useState<string | null>(null);
   const [visibility, setVisibility] = useState<"PUBLIC" | "PRIVATE">("PUBLIC");
@@ -55,7 +56,7 @@ export function PostComposerModal({
 
   useEffect(() => {
     if (!open) {
-      setContent("");
+      // Don't clear draft when closing - only clear on successful submit
       setMediaFile(null);
       setMediaPreviewUrl(null);
       setVisibility("PUBLIC");
@@ -114,6 +115,7 @@ export function PostComposerModal({
       setError(null);
       await postsAPI.create(content.trim(), mediaFile, visibility);
       toast.success("Post created successfully!");
+      clearDraft();
       onOpenChange(false);
       window.dispatchEvent(new Event("post-created"));
     } catch (err) {

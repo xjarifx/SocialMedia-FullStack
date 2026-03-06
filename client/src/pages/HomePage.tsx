@@ -4,7 +4,7 @@ import { postsAPI, likesAPI, followsAPI } from "../services/api";
 import { Feed, CommentsModal } from "../components";
 import type { PostProps } from "../components";
 import { useAuth } from "../context/auth-context";
-import { useComments } from "../hooks";
+import { useComments, useDraft } from "../hooks";
 import { transformPost } from "../utils";
 
 type FeedTab = "following" | "forYou";
@@ -23,7 +23,7 @@ export default function HomePage() {
   const [forYouOffset, setForYouOffset] = useState(0);
   const [hasMoreFollowing, setHasMoreFollowing] = useState(true);
   const [hasMoreForYou, setHasMoreForYou] = useState(true);
-  const [composerText, setComposerText] = useState("");
+  const { draft: composerText, setDraft: setComposerText, clearDraft: clearComposerDraft } = useDraft('homepage-composer-draft');
   const [composerVisibility, setComposerVisibility] = useState<
     "PUBLIC" | "PRIVATE"
   >("PUBLIC");
@@ -302,7 +302,7 @@ export default function HomePage() {
         inlineMediaFile,
         composerVisibility,
       );
-      setComposerText("");
+      clearComposerDraft();
       setInlineMediaFile(null);
       setComposerVisibility("PUBLIC");
       window.dispatchEvent(new Event("post-created"));
@@ -321,6 +321,7 @@ export default function HomePage() {
     isInlinePosting,
     isOverCharLimit,
     refreshFeeds,
+    clearComposerDraft,
   ]);
 
   const renderComposerSection = () => (

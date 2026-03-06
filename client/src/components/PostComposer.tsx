@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { postsAPI } from "../services/api";
 import { useAuth } from "../context/auth-context";
+import { useDraft } from "../hooks/useDraft";
 import {
   Avatar,
   MediaUpload,
@@ -22,7 +23,7 @@ export function PostComposer({
   className = "",
 }: PostComposerProps) {
   const { user } = useAuth();
-  const [composerText, setComposerText] = useState("");
+  const { draft: composerText, setDraft: setComposerText, clearDraft } = useDraft('post-composer-draft');
   const [composerVisibility, setComposerVisibility] = useState<
     "PUBLIC" | "PRIVATE"
   >("PUBLIC");
@@ -51,7 +52,7 @@ export function PostComposer({
         mediaFile,
         composerVisibility,
       );
-      setComposerText("");
+      clearDraft();
       setMediaFile(null);
       setComposerVisibility("PUBLIC");
       window.dispatchEvent(new Event("post-created"));
@@ -61,7 +62,7 @@ export function PostComposer({
     } finally {
       setIsPosting(false);
     }
-  }, [canPost, composerText, composerVisibility, mediaFile, onPostCreated]);
+  }, [canPost, composerText, composerVisibility, mediaFile, onPostCreated, clearDraft]);
 
   const toggleVisibility = useCallback(() => {
     setComposerVisibility((prev) => (prev === "PUBLIC" ? "PRIVATE" : "PUBLIC"));
