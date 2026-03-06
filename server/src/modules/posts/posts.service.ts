@@ -1,5 +1,5 @@
 import { prisma } from "../../lib/prisma";
-import { uploadMedia } from "../../lib/cloudinary";
+import { uploadMedia } from "../../lib/imagekit";
 import {
   buildCacheKey,
   cacheGet,
@@ -276,9 +276,9 @@ export const createPost = async (
   if (file) {
     try {
       const uploadResult = await uploadMedia(file);
-      imageUrl = uploadResult.secure_url;
+      imageUrl = uploadResult.url;
     } catch (error) {
-      console.error("Cloudinary upload error:", error);
+      console.error("ImageKit upload error:", error);
       throw { status: 500, error: "Unable to upload media" };
     }
   }

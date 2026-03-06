@@ -18,8 +18,19 @@ export const bootstrapEnv = (): void => {
   process.env.REDIS_URL = process.env[`REDIS_URL_${envSuffix}`] || process.env.REDIS_URL || "";
   process.env.FRONTEND_URL = process.env[`FRONTEND_URL_${envSuffix}`] || process.env.FRONTEND_URL || "";
   process.env.BACKEND_URL = process.env[`BACKEND_URL_${envSuffix}`] || process.env.BACKEND_URL || "";
-  process.env.STRIPE_SUCCESS_URL = process.env[`STRIPE_SUCCESS_URL_${envSuffix}`] || process.env.STRIPE_SUCCESS_URL || "";
-  process.env.STRIPE_CANCEL_URL = process.env[`STRIPE_CANCEL_URL_${envSuffix}`] || process.env.STRIPE_CANCEL_URL || "";
+  
+  // Automatically construct Stripe URLs from FRONTEND_URL (can be overridden if needed)
+  if (!process.env.STRIPE_SUCCESS_URL && !process.env[`STRIPE_SUCCESS_URL_${envSuffix}`]) {
+    process.env.STRIPE_SUCCESS_URL = `${process.env.FRONTEND_URL}/billing/success`;
+  } else {
+    process.env.STRIPE_SUCCESS_URL = process.env[`STRIPE_SUCCESS_URL_${envSuffix}`] || process.env.STRIPE_SUCCESS_URL || "";
+  }
+  
+  if (!process.env.STRIPE_CANCEL_URL && !process.env[`STRIPE_CANCEL_URL_${envSuffix}`]) {
+    process.env.STRIPE_CANCEL_URL = `${process.env.FRONTEND_URL}/billing/cancel`;
+  } else {
+    process.env.STRIPE_CANCEL_URL = process.env[`STRIPE_CANCEL_URL_${envSuffix}`] || process.env.STRIPE_CANCEL_URL || "";
+  }
 
   console.log(`🌍 Environment: ${APP_ENV}`);
   console.log(`📡 Frontend URL: ${process.env.FRONTEND_URL}`);
