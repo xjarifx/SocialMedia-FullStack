@@ -13,6 +13,7 @@ import { Link } from "react-router-dom";
 import { blocksAPI, followsAPI } from "../services/api";
 import { useAuth } from "../context/auth-context";
 import { ProBadge } from "./ProBadge";
+import { Avatar, ActionButton } from "./common";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -221,9 +222,7 @@ function PostCardComponent({
         {/* Header Row */}
         <div className="flex items-start gap-4">
           {/* Large square avatar with rounded corners */}
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-[15px] font-medium text-white">
-            {initials}
-          </div>
+          <Avatar initials={initials} size="lg" />
 
           <div className="min-w-0 flex-1">
             {/* Author + Timestamp on same line */}
@@ -289,24 +288,18 @@ function PostCardComponent({
 
             {/* Actions — chip style */}
             <div className="mt-3 flex items-center gap-2">
-              <button
+              <ActionButton
+                icon={Heart}
+                count={likeCount}
+                isActive={isLiked}
                 onClick={handleLike}
-                className={`inline-flex cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-[13px] font-medium transition ${
-                  isLiked
-                    ? "bg-red-500/20 text-red-400"
-                    : "text-white/80 hover:bg-white/10"
-                }`}
-              >
-                <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
-                <span>{likeCount}</span>
-              </button>
-              <button
+              />
+              <ActionButton
+                icon={MessageCircle}
+                count={replies}
                 onClick={() => onReply?.(id)}
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-[13px] font-medium text-white/80 transition hover:bg-white/10"
-              >
-                <MessageCircle className="h-4 w-4" />
-                <span>{replies}</span>
-              </button>
+                activeColor="text-white/80"
+              />
             </div>
           </div>
         </div>

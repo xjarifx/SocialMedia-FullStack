@@ -4,3 +4,7 @@ export { CommentsModal } from "./CommentsModal";
 export { EditPostModal } from "./EditPostModal";
 export { MobileNav } from "./MobileNav";
 export { ProBadge } from "./ProBadge";
+export { PostComposer } from "./PostComposer";
+
+// Re-export common components
+export * from "./common";
