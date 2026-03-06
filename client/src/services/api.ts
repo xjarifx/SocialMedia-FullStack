@@ -1,9 +1,20 @@
-// API configuration
-const APP_ENV = import.meta.env.VITE_APP_ENV || "development";
-const API_URL_DEV = import.meta.env.VITE_API_URL_DEV || "http://localhost:3000/api/v1";
-const API_URL_PROD = import.meta.env.VITE_API_URL_PROD || "/api/v1";
+// API configuration - Individual resource switches
+const shouldUseProd = (switchName: string): boolean => {
+  const value = import.meta.env[switchName]?.toLowerCase().trim();
+  return value === "true" || value === "1" || value === "yes";
+};
 
-const API_BASE_URL = APP_ENV === "production" ? API_URL_PROD : API_URL_DEV;
+const getApiUrl = (): string => {
+  const useProd = shouldUseProd("USE_PROD_API");
+  const prodUrl = import.meta.env.VITE_API_URL_PROD;
+  const devUrl = import.meta.env.VITE_API_URL_DEV;
+  
+  if (useProd && prodUrl) return prodUrl;
+  if (!useProd && devUrl) return devUrl;
+  return prodUrl || devUrl || "/api/v1";
+};
+
+const API_BASE_URL = getApiUrl();
 
 export const API_ROOT_URL = API_BASE_URL.startsWith("/")
   ? window.location.origin
