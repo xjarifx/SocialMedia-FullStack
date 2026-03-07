@@ -13,7 +13,7 @@ type FeedTab = "following" | "forYou";
 
 export default function HomePage() {
   const { user } = useAuth();
-  const { blockedUsers, isBlocked } = useBlocks();
+  const { isBlocked } = useBlocks();
   const pageSize = 20;
   const [followingPosts, setFollowingPosts] = useState<PostProps[]>([]);
   const [forYouPosts, setForYouPosts] = useState<PostProps[]>([]);

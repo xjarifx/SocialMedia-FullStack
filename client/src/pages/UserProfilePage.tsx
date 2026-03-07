@@ -16,7 +16,7 @@ export default function UserProfilePage() {
   const { userId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { blockedUsers, isBlocked, blockUser, unblockUser } = useBlocks();
+  const { isBlocked, blockUser, unblockUser } = useBlocks();
   const [profile, setProfile] = useState<User | null>(null);
   const [following, setFollowing] = useState<Follower[]>([]);
   const [followers, setFollowers] = useState<Follower[]>([]);

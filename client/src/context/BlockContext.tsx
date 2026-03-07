@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import { blocksAPI } from "../services/api";
 import type { BlockedUser } from "../services/api";
 import { useAuth } from "./auth-context";

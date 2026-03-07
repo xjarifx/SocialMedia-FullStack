@@ -4,9 +4,7 @@ import { usersAPI, type User } from "../services/api";
 import { useAuth } from "../context/auth-context";
 import { Search } from "lucide-react";
 import {
-  PageHeader,
   LoadingSkeleton,
-  EmptyState,
   UserCard,
   ErrorMessage,
 } from "../components";

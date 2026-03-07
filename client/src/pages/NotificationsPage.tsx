@@ -3,7 +3,6 @@ import { notificationsAPI } from "../services/api";
 import type { Notification } from "../services/api";
 import { Bell, RefreshCw } from "lucide-react";
 import {
-  PageHeader,
   LoadingSkeleton,
   EmptyState,
   ErrorMessage,

@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, Bell, Search, User, LogOut, MoreHorizontal, Bookmark, List, CreditCard } from "lucide-react";
+import { Home, Bell, Search, User, LogOut, MoreHorizontal, CreditCard } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "../context/auth-context";
