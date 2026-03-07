@@ -37,7 +37,7 @@ export function PostComposerModal({
   const progressPercent = Math.min((currentLength / charLimit) * 100, 100);
 
   let countColor = "text-text-secondary";
-  let progressColor = "bg-accent";
+  let progressColor = "bg-blue-500";
   if (isOverLimit) {
     countColor = "text-danger";
     progressColor = "bg-danger";

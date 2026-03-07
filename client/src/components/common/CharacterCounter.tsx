@@ -17,7 +17,7 @@ export function CharacterCounter({
       <div className="h-1 w-full overflow-hidden rounded-full bg-border">
         <div
           className={`h-full transition-all duration-base ${
-            isOverLimit ? "bg-danger" : "bg-accent"
+            isOverLimit ? "bg-danger" : "bg-blue-500"
           }`}
           style={{ width: `${progressPercent}%` }}
         />

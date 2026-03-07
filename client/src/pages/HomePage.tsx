@@ -398,10 +398,10 @@ export default function HomePage() {
             </div>
           )}
 
-          <div className="bg-border mt-2 h-1 w-full overflow-hidden rounded-full">
+          <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-border">
             <div
               className={`h-full transition-all ${
-                isOverCharLimit ? "bg-red-500" : "bg-accent"
+                isOverCharLimit ? "bg-red-500" : "bg-blue-500"
               }`}
               style={{ width: `${progressPercent}%` }}
             />
