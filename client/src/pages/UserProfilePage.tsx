@@ -9,11 +9,13 @@ import { useComments } from "../hooks";
 import { transformPost } from "../utils";
 import { Button } from "../components/ui/button";
 
-export default function UserProfilePage() {
+function UserProfilePage() {
   const { userId } = useParams();
   const { user } = useAuth();
   const [profile, setProfile] = useState<User | null>(null);
   const [following, setFollowing] = useState<Follower[]>([]);
+  const [followers, setFollowers] = useState<Follower[]>([]);
+  const [userFollowing, setUserFollowing] = useState<Follower[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +81,19 @@ export default function UserProfilePage() {
       )
       .finally(() => setPostsLoading(false));
   }, [user?.id, userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    Promise.all([
+      followsAPI.getUserFollowers(userId),
+      followsAPI.getUserFollowing(userId),
+    ])
+      .then(([followersData, followingData]) => {
+        setFollowers(followersData);
+        setUserFollowing(followingData);
+      })
+      .catch((err) => console.error("Failed to load followers/following:", err));
+  }, [userId]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -196,9 +211,9 @@ export default function UserProfilePage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div>
       {/* Profile Hero */}
-      <div className="border-y border-white/15 bg-black">
+      <div className="border-b border-border bg-background">
         <div className="px-6 py-5">
           {error && (
             <div className="mb-4 rounded-xl border border-[#ea4335]/30 bg-[#fce8e6] px-4 py-3 text-[13px] text-[#c5221f]">
@@ -208,44 +223,66 @@ export default function UserProfilePage() {
 
           {isLoading ? (
             <div className="py-6">
-              <p className="text-[13px] text-white/65">Loading user...</p>
+              <p className="text-[13px] text-text-muted">Loading user...</p>
             </div>
           ) : (
             <>
-              <div className="flex items-end gap-5">
-                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-2 border-accent bg-accent text-xl font-semibold text-white shadow-lg">
-                  {profile?.firstName?.[0] || ""}
-                  {profile?.lastName?.[0] || ""}
-                </div>
-                <div className="flex flex-1 items-center justify-between gap-4 pb-1">
-                  <div>
-                    <p className="flex items-center gap-2 text-[20px] font-medium text-white">
+              <div className="flex items-start justify-between">
+                <div className="flex items-end gap-5">
+                  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-2 border-accent bg-accent text-2xl font-semibold text-white shadow-card">
+                    {profile?.firstName?.[0] || ""}
+                    {profile?.lastName?.[0] || ""}
+                  </div>
+                  <div className="min-w-0 pb-1">
+                    <h2 className="flex items-center gap-2 text-xl font-bold text-text-primary">
                       {profile?.firstName} {profile?.lastName}
                       <ProBadge isPro={profile?.plan === "PRO"} />
-                    </p>
-                    <p className="text-[13px] text-white/65">
+                    </h2>
+                    <p className="text-sm text-text-secondary">
                       @{profile?.username}
                     </p>
                   </div>
-                  {canFollow && (
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant={isFollowing ? "secondary" : "default"}
-                        onClick={handleFollowToggle}
-                        className="rounded-xl"
-                      >
-                        {isFollowing ? "Following" : "Follow"}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={handleBlock}
-                        disabled={isBlocking}
-                        className="rounded-xl text-[#ea4335] hover:text-[#ea4335]"
-                      >
-                        {isBlocking ? "..." : "Block"}
-                      </Button>
-                    </div>
-                  )}
+                </div>
+
+                {canFollow && (
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Button
+                      variant={isFollowing ? "secondary" : "default"}
+                      onClick={handleFollowToggle}
+                    >
+                      {isFollowing ? "Following" : "Follow"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={handleBlock}
+                      disabled={isBlocking}
+                      className="text-danger hover:text-danger"
+                    >
+                      {isBlocking ? "..." : "Block"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Stats Row */}
+              <div className="mt-5 flex gap-2">
+                <div className="flex-1 rounded-xl border border-border bg-surface px-4 py-3 text-center">
+                  <p className="text-xl font-bold text-text-primary">
+                    {followers.length}
+                  </p>
+                  <p className="text-xs text-text-secondary">Followers</p>
+                </div>
+                <div className="flex-1 rounded-xl border border-border bg-surface px-4 py-3 text-center">
+                  <p className="text-xl font-bold text-text-primary">
+                    {userFollowing.length}
+                  </p>
+                  <p className="text-xs text-text-secondary">Following</p>
+                </div>
+                <div className="flex-1 rounded-xl border border-border bg-surface px-4 py-3 text-center">
+                  <p className="text-xl font-bold text-text-primary">
+                    {0}
+                  </p>
+                  <p className="text-xs text-text-secondary">Blocked</p>
                 </div>
               </div>
             </>

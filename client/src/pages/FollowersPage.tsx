@@ -1,22 +1,23 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { followsAPI, type Follower } from "../services/api";
+import { useAuth } from "../context/auth-context";
 import { Users } from "lucide-react";
 import { Button } from "../components/ui/button";
 
 export default function FollowersPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [followers, setFollowers] = useState<Follower[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadFollowers = async () => {
+      if (!user?.id) return;
       try {
         setIsLoading(true);
-        // Get current user ID from auth context or use a placeholder
-        const userId = "current"; // This should come from auth context
-        const data = await followsAPI.getUserFollowers(userId);
+        const data = await followsAPI.getUserFollowers(user.id);
         setFollowers(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load followers");
@@ -25,7 +26,7 @@ export default function FollowersPage() {
       }
     };
     loadFollowers();
-  }, []);
+  }, [user?.id]);
 
   return (
     <div>
