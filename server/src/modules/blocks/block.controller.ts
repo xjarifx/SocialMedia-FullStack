@@ -102,7 +102,10 @@ export const checkBlockStatus = async (
 ): Promise<void> => {
   try {
     const userId: string = req.userId as string;
-    const targetUserId: string = req.params.userId;
+    const targetUserIdParam = req.params.userId;
+    const targetUserId = Array.isArray(targetUserIdParam)
+      ? targetUserIdParam[0]
+      : targetUserIdParam;
 
     if (!userId) {
       res.status(401).json({ error: "Unauthorized" });
